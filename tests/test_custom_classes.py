@@ -1,3 +1,5 @@
+import pytest
+
 import click
 
 
@@ -80,6 +82,21 @@ def test_group_command_class(runner):
     subcommand = group.command(cls=click.Command)(lambda: None)
     assert type(subcommand) is click.Command
 
+    @click.group(command_class=CustomCommand)
+    def g():
+        pass
+
+    subcommand = g.command()(lambda: None)
+    assert type(subcommand) is CustomCommand
+    subcommand = g.command(cls=click.Command)(lambda: None)
+    assert type(subcommand) is click.Command
+
+    with pytest.raises(TypeError, match="command_class attribute already set"):
+
+        @click.group(cls=CustomGroup, command_class=CustomCommand)
+        def g():
+            pass
+
 
 def test_group_group_class(runner):
     """A group with a custom ``group_class`` should create subgroups
@@ -96,6 +113,15 @@ def test_group_group_class(runner):
     subgroup = group.group()(lambda: None)
     assert type(subgroup) is CustomSubGroup
     subgroup = group.command(cls=click.Group)(lambda: None)
+    assert type(subgroup) is click.Group
+
+    @click.group(group_class=CustomSubGroup)
+    def g():
+        pass
+
+    subgroup = g.group()(lambda: None)
+    assert type(subgroup) is CustomSubGroup
+    subgroup = g.command(cls=click.Group)(lambda: None)
     assert type(subgroup) is click.Group
 
 

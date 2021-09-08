@@ -1755,12 +1755,18 @@ class Group(MultiCommand):
     :param commands: A dict mapping names to :class:`Command` objects.
         Can also be a list of :class:`Command`, which will use
         :attr:`Command.name` to create the dict.
+    :param command_class: The default :class:`Command` class to be used in
+        :meth:`command` decorator.
+    :param group_class: The default :class:`Group` class to be used in
+        :meth:`group` decorator.
     :param attrs: Other command arguments described in
         :class:`MultiCommand`, :class:`Command`, and
         :class:`BaseCommand`.
 
     .. versionchanged:: 8.0
         The ``commmands`` argument can be a list of command objects.
+    .. versionchanged:: 8.1
+        Added ``command_class`` and ``group_class`` parameters.
     """
 
     #: If set, this is used by the group's :meth:`command` decorator
@@ -1787,6 +1793,8 @@ class Group(MultiCommand):
         self,
         name: t.Optional[str] = None,
         commands: t.Optional[t.Union[t.Dict[str, Command], t.Sequence[Command]]] = None,
+        command_class: t.Optional[t.Type[Command]] = None,
+        group_class: t.Optional[t.Union[t.Type["Group"], t.Type[type]]] = None,
         **attrs: t.Any,
     ) -> None:
         super().__init__(name, **attrs)
@@ -1798,6 +1806,16 @@ class Group(MultiCommand):
 
         #: The registered subcommands by their exported names.
         self.commands: t.Dict[str, Command] = commands
+
+        cls = self.__class__
+        if command_class is not None:
+            if cls.command_class is not None:
+                raise TypeError(f"command_class attribute already set on {cls}")
+            self.command_class = command_class
+        if group_class is not None:
+            if cls.group_class is not None:
+                raise TypeError(f"group_class attribute already set on {cls}")
+            self.group_class = group_class
 
     def add_command(self, cmd: Command, name: t.Optional[str] = None) -> None:
         """Registers another :class:`Command` with this group.  If the name
